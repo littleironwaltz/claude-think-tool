@@ -242,8 +242,6 @@ I'd recommend modifying your approach to prioritize basic security testing befor
 
 ```
 .
-├── cmd/
-│   └── thinktool/     // Command specific code
 ├── internal/
 │   ├── domain/        // Core entities and interfaces
 │   │   ├── entities.go   // Data structures
