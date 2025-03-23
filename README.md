@@ -32,6 +32,8 @@ The think tool is particularly effective for:
 - File input/output support for batch processing
 - Multiple output formats (text, JSON)
 - Custom prompt templates
+- Clean architecture with proper separation of concerns
+- Comprehensive test suite with unit and integration tests
 
 ## How It Works
 
@@ -64,6 +66,31 @@ The tool is defined with this schema:
   }
 }
 ```
+
+## Project Architecture
+
+The project follows clean architecture principles with clear separation of concerns:
+
+- **Domain Layer** (`internal/domain/`): Core entities and interfaces
+  - `entities.go`: Core data structures like Tool, Config, ThinkResponse
+  - `ports.go`: Interface definitions for services, clients, storage
+
+- **Use Case Layer** (`internal/usecase/`): Business logic
+  - `thinkservice.go`: Implementation of the thought analysis service
+
+- **Interface Layer** (`internal/interface/`): User interfaces and formatters
+  - `cli.go`: Command-line interface
+  - `formatter.go`: Output formatting
+
+- **Infrastructure Layer** (`internal/infra/`): External dependencies
+  - `apiclient.go`: Claude API client
+  - `filestorage.go`: File system operations
+
+- **Test Layer** (`test/`): Test helpers and integration tests
+  - `unit/`: Test helpers, mocks, and fixtures
+  - `integration/`: Integration and E2E tests
+
+- **Entry Point** (`main.go`): Application startup and dependency wiring
 
 ## Requirements
 
@@ -162,6 +189,27 @@ Use a custom prompt template:
 go run main.go -prompt "Critically evaluate this hypothesis:" "Our new marketing strategy will increase conversion rates by 25%"
 ```
 
+## Testing
+
+The project includes a comprehensive test suite:
+
+```bash
+# Run all unit tests
+go test ./internal/...
+
+# Run with race detection
+go test -race ./internal/...
+
+# Run integration tests (requires environment variable)
+RUN_INTEGRATION_TESTS=1 go test ./test/integration/...
+
+# Run end-to-end tests (requires API key)
+RUN_E2E_TESTS=1 ANTHROPIC_API_KEY="your-key" go test ./test/integration/e2e_test.go
+
+# Run CLI option tests
+go test -v ./test/integration/cli_options_test.go
+```
+
 ## Example Output
 
 The tool analyzes a thought process and provides feedback on its strengths and weaknesses:
@@ -187,10 +235,34 @@ I'd recommend modifying your approach to prioritize basic security testing befor
 
 ## Project Structure
 
-- `main.go`: Complete implementation of the think tool cycle
-- `README.md`: This file with project overview and usage instructions
-- `CLAUDE.md`: Build instructions and code style guidelines
-- `IMPROVEMENTS.md`: Completed and planned improvements
+```
+.
+├── cmd/
+│   └── thinktool/     // Command specific code
+├── internal/
+│   ├── domain/        // Core entities and interfaces
+│   │   ├── entities.go   // Data structures
+│   │   └── ports.go      // Interface definitions
+│   ├── usecase/       // Application logic
+│   │   └── thinkservice.go  // Business logic
+│   ├── interface/     // CLI and formatters
+│   │   ├── cli.go        // Command-line interface
+│   │   └── formatter.go  // Output formatting
+│   └── infra/         // External dependencies
+│       ├── apiclient.go  // Claude API client
+│       └── filestorage.go // File system operations
+├── test/
+│   ├── unit/          // Test helpers
+│   │   └── mocks/        // Mock implementations
+│   └── integration/   // Integration tests
+│       ├── e2e_test.go      // End-to-end tests
+│       └── cli_options_test.go // CLI option tests
+├── README.md          // This file
+├── CLAUDE.md          // Build instructions and code style guidelines
+├── IMPROVEMENTS.md    // Completed and planned improvements
+├── go.mod             // Go module definition
+└── main.go            // Application entry point
+```
 
 ## Contributing
 
