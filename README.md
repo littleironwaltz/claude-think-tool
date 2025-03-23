@@ -27,6 +27,11 @@ The think tool is particularly effective for:
 - Provides structured analysis of thought processes
 - Implements proper error handling and context support
 - Follows Go best practices and idiomatic patterns
+- CLI interface with flexible configuration options
+- Interactive mode for conversational thought analysis
+- File input/output support for batch processing
+- Multiple output formats (text, JSON)
+- Custom prompt templates
 
 ## How It Works
 
@@ -44,6 +49,7 @@ The tool is defined with this schema:
 
 ```json
 {
+  "type": "custom",
   "name": "think",
   "description": "A tool to analyze and verify thinking processes",
   "input_schema": {
@@ -85,47 +91,106 @@ Before running the tool, make sure to set your Anthropic API key as an environme
 export ANTHROPIC_API_KEY="your-api-key-here"
 ```
 
-Then run the program:
+### Basic Usage
+
+Run the program with a custom thought:
+
+```bash
+go run main.go "I think we should launch the new product immediately because our competitor just released a similar feature"
+```
+
+Or use the default example thought:
 
 ```bash
 go run main.go
 ```
 
-The program will:
-1. Send an initial request to Claude with a sample thought about launching a feature
-2. Process Claude's tool use request
-3. Send a structured analysis back to Claude
-4. Display Claude's final analysis incorporating the thinking step
+### Command Line Options
+
+The tool supports various command-line options:
+
+```
+Usage:
+  claude-think-tool [options] [thought]
+
+Options:
+  -apikey string
+        Anthropic API key (default: ANTHROPIC_API_KEY env var)
+  -format string
+        Output format (text, json) (default "text")
+  -help
+        Print help information
+  -input string
+        Input file containing thought to analyze
+  -interactive
+        Interactive mode
+  -max-tokens int
+        Maximum tokens in Claude's response (default 1024)
+  -model string
+        Claude model to use (default "claude-3-7-sonnet-20250219")
+  -output string
+        Output file for analysis results
+  -prompt string
+        Custom prompt template (default: "Please analyze the following thought: %s")
+  -timeout duration
+        API request timeout (default 30s)
+  -verbose
+        Verbose output mode
+  -version
+        Print version information
+```
+
+### Examples
+
+Analyze a thought and save the result to a file in JSON format:
+```bash
+go run main.go -output analysis.json -format json "I believe we should launch this feature"
+```
+
+Read a thought from a file:
+```bash
+go run main.go -input thought.txt
+```
+
+Use interactive mode for continuous analysis:
+```bash
+go run main.go -interactive
+```
+
+Use a custom prompt template:
+```bash
+go run main.go -prompt "Critically evaluate this hypothesis:" "Our new marketing strategy will increase conversion rates by 25%"
+```
 
 ## Example Output
 
 The tool analyzes a thought process and provides feedback on its strengths and weaknesses:
 
 ```
-## Analysis of the Feature Launch Decision
+## Analysis of Your Launch Reasoning
 
-### Strengths in the Reasoning
-- **Data-Driven Approach**: The decision is supported by concrete metrics
-- **Strategic Alignment**: The proposal directly addresses quarterly goals
-- **Solution-Oriented**: Offers a compromise rather than just delay
+Your thinking demonstrates a data-driven approach with clear business justification, but contains an important blindspot regarding security.
+
+### Strengths
+- **Data-backed decision making**: You've cited specific metrics (23% engagement improvement, 15% faster load times) that support the launch
+- **Strategic alignment**: You've connected the launch to Q2 goals, showing business purpose
+- **Solution-oriented**: You've proposed a pragmatic approach (limited rollout with parallel testing)
 
 ### Concerns
-- **Security Testing Gap**: Security testing appears to be treated as secondary
-- **Risk Assessment**: The thought minimizes potential security risks
-- **Process Sequence**: Security testing should precede user exposure
+- **Security risk acceptance**: Launching without completed security testing creates significant risk
+- **Timing assumption**: The parallel testing approach assumes security issues would be discovered early in the limited rollout
+- **Missing contingency**: There's no mentioned plan for handling security issues discovered post-launch
 
 ### Recommendation
-This thinking demonstrates good business awareness but potentially undervalues security 
-considerations. A stronger approach would be to:
-1. Complete essential security testing before any user exposure
-2. Design a phased rollout with clear success metrics
-3. Develop a contingency plan for security issues discovered during the limited release
+I'd recommend modifying your approach to prioritize basic security testing before any public release. Consider a more structured phased rollout with clear evaluation criteria at each stage and prepare contingency plans for potential security vulnerabilities that might be discovered.
 ```
 
 ## Project Structure
 
 - `main.go`: Complete implementation of the think tool cycle
 - `README.md`: This file with project overview and usage instructions
+- `CLAUDE.md`: Build instructions and code style guidelines
+- `IMPROVEMENTS.md`: Completed and planned improvements
 
 ## Contributing
 
