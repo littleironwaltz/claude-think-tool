@@ -263,8 +263,6 @@ I'd recommend modifying your approach to prioritize basic security testing befor
 │       ├── e2e_test.go      // End-to-end tests
 │       └── cli_options_test.go // CLI option tests
 ├── README.md          // This file
-├── CLAUDE.md          // Build instructions and code style guidelines
-├── IMPROVEMENTS.md    // Completed and planned improvements
 ├── go.mod             // Go module definition
 └── main.go            // Application entry point
 ```
