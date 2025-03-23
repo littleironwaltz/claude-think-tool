@@ -28,7 +28,7 @@ The think tool is particularly effective for:
 - Implements proper error handling and context support
 - Follows Go best practices and idiomatic patterns
 - CLI interface with flexible configuration options
-- Interactive mode for conversational thought analysis
+- Interactive mode for conversational thought analysis with line-by-line input
 - File input/output support for batch processing
 - Multiple output formats (text, JSON)
 - Custom prompt templates
@@ -182,6 +182,11 @@ go run main.go -input thought.txt
 Use interactive mode for continuous analysis:
 ```bash
 go run main.go -interactive
+# Then enter thoughts line by line, with "exit" or "quit" to end the session
+# Example:
+# > I think our company should expand into the European market
+# > Our team should be restructured to focus more on AI initiatives
+# > exit
 ```
 
 Use a custom prompt template:

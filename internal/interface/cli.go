@@ -1,13 +1,13 @@
 package interfacelayer
 
 import (
-	"bytes"
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"claude-think-tool/internal/domain"
@@ -117,6 +117,14 @@ func (c *CLI) runWithExit(shouldExit bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), config.Timeout)
 	defer cancel()
 	
+	// Check API key before proceeding
+	if config.APIKey == "" {
+		config.APIKey = os.Getenv("ANTHROPIC_API_KEY")
+		if config.APIKey == "" {
+			log.Fatalf("Error: API key not found. Set it with -apikey flag or ANTHROPIC_API_KEY environment variable.")
+		}
+	}
+
 	// Handle interactive mode
 	if *interactive {
 		c.runInteractiveMode(ctx, config)
@@ -144,6 +152,12 @@ func (c *CLI) runWithExit(shouldExit bool) {
 }
 
 // runInteractiveMode handles interactive CLI mode
+// Exported for testing
+func (c *CLI) RunInteractiveMode(ctx context.Context, config domain.Config) {
+	c.runInteractiveMode(ctx, config)
+}
+
+// runInteractiveMode handles interactive CLI mode
 func (c *CLI) runInteractiveMode(ctx context.Context, config domain.Config) {
 	fmt.Println("Claude Think Tool Interactive Mode")
 	fmt.Println("Type 'exit' or 'quit' to exit")
@@ -151,15 +165,19 @@ func (c *CLI) runInteractiveMode(ctx context.Context, config domain.Config) {
 	
 	for {
 		fmt.Print("> ")
-		var input string
-		scanner := bytes.NewBuffer(nil)
-		if _, err := io.Copy(scanner, os.Stdin); err != nil {
-			log.Fatalf("Error reading input: %v", err)
+		scanner := bufio.NewScanner(os.Stdin)
+		if !scanner.Scan() {
+			// Handle EOF
+			break
 		}
-		input = scanner.String()
+		input := strings.TrimSpace(scanner.Text())
 		
 		if input == "exit" || input == "quit" {
 			break
+		}
+		
+		if input == "" {
+			continue
 		}
 		
 		// Process the thought

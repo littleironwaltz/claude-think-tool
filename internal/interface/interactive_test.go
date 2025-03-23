@@ -1,11 +1,14 @@
 package interfacelayer_test
 
 import (
+	"bufio"
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"claude-think-tool/internal/domain"
+	interfacelayer "claude-think-tool/internal/interface"
 	"claude-think-tool/test/unit"
 )
 
@@ -66,34 +69,110 @@ func TestMockStdinStdout(t *testing.T) {
 	}
 }
 
-func TestInteractiveModeSimulated(t *testing.T) {
-	// For now, we'll focus on testing that the CLI correctly processes command line arguments
-	// Interactive mode testing is more complex due to the need to mock stdin/stdout
-	// We'll cover that in a separate integration test
+func TestInteractiveModeWithScannerInput(t *testing.T) {
+	// Save original stdin and stdout
+	oldStdin := os.Stdin
+	oldStdout := os.Stdout
+	defer func() {
+		os.Stdin = oldStdin
+		os.Stdout = oldStdout
+	}()
+
+	// Create pipes
+	stdinReader, stdinWriter, _ := os.Pipe()
+	stdoutReader, stdoutWriter, _ := os.Pipe()
 	
+	// Redirect stdin and stdout
+	os.Stdin = stdinReader
+	os.Stdout = stdoutWriter
+
 	// Create mock dependencies
 	mockService := &unit.MockThinkService{}
+	mockFileStorage := &unit.MockFileStorage{}
+	formatter := interfacelayer.NewFormatter()
 	
-	// Set up mock service
+	// Set up input and expected thoughts
+	inputPrompts := []string{
+		"thought 1",
+		"thought 2",
+		"exit",
+	}
+	
+	// Set up mock service to handle each thought
 	callCount := 0
 	mockService.AnalyzeThoughtFunc = func(ctx context.Context, thought string, config domain.Config) (*domain.ThinkResponse, error) {
 		callCount++
-		expectedThoughts := []string{"thought 1", "thought 2", "thought 3"}
+		expectedThoughts := []string{"thought 1", "thought 2"}
 		
 		if callCount <= len(expectedThoughts) && thought != expectedThoughts[callCount-1] {
 			t.Errorf("Expected thought %q for call %d, got %q", expectedThoughts[callCount-1], callCount, thought)
 		}
 		
 		return &domain.ThinkResponse{
-			Raw:     map[string]interface{}{"content": "Response " + thought},
-			Content: "Response " + thought,
+			Raw: map[string]interface{}{
+				"content": []map[string]interface{}{
+					{"type": "text", "text": "Response for: " + thought},
+				},
+			},
+			Content: "Response for: " + thought,
 		}, nil
 	}
+
+	// Create CLI
+	cli := interfacelayer.NewCLI(mockService, mockFileStorage, formatter)
 	
-	// Since it's difficult to fully test the interactive mode with stdin/stdout redirection,
-	// we'll just verify a few key behaviors in other tests (TestCLI_ProcessFlags for CLI flags 
-	// and TestFormatter_FormatOutput for formatting behavior)
+	// Run interactive mode in a goroutine
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 	
-	// For now, we'll consider this test successful if it compiles and runs
-	t.Skip("Interactive mode tests are better handled with integration tests")
+	config := domain.Config{
+		APIKey:        "test-key",
+		Model:         "test-model",
+		MaxTokens:     100,
+		OutputFormat:  "text",
+	}
+	
+	// Run the interactive mode in a separate goroutine
+	done := make(chan bool)
+	go func() {
+		cli.RunInteractiveMode(ctx, config)
+		done <- true
+	}()
+	
+	// Write inputs to stdin with small delays
+	go func() {
+		// Let CLI print its welcome message
+		time.Sleep(100 * time.Millisecond)
+		
+		// Feed each input prompt with a small delay
+		for _, prompt := range inputPrompts {
+			stdinWriter.Write([]byte(prompt + "\n"))
+			time.Sleep(100 * time.Millisecond)
+		}
+		stdinWriter.Close()
+	}()
+	
+	// Read output
+	go func() {
+		scanner := bufio.NewScanner(stdoutReader)
+		for scanner.Scan() {
+			// Just consume the output
+		}
+	}()
+	
+	// Wait for interactive mode to finish
+	select {
+	case <-done:
+		// Test passes if we get here
+	case <-time.After(5 * time.Second):
+		t.Fatal("Test timed out")
+	}
+	
+	// Verify the correct number of calls were made
+	if callCount != 2 {
+		t.Errorf("Expected 2 calls to AnalyzeThought, got %d", callCount)
+	}
+	
+	// Close stdout to allow output reader to complete
+	stdoutWriter.Close()
 }

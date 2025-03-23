@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"claude-think-tool/internal/infra"
@@ -15,8 +16,11 @@ func main() {
 		Timeout: 30 * time.Second,
 	}
 
+	// Get API key from environment
+	apiKey := os.Getenv("ANTHROPIC_API_KEY")
+
 	// Initialize infrastructure
-	apiClient := infra.NewClaudeAPIClient(httpClient, "")
+	apiClient := infra.NewClaudeAPIClient(httpClient, apiKey)
 	fileStorage := infra.NewFileStorage()
 
 	// Initialize use cases

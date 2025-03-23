@@ -66,6 +66,10 @@ func (s *ThinkService) AnalyzeThought(ctx context.Context, thought string, confi
 		"tools": []interface{}{toolMap},
 	}
 
+	// Print request for debugging
+	reqJSON, _ := json.MarshalIndent(initialRequestMap, "", "  ")
+	fmt.Printf("API Request: %s\n", reqJSON)
+
 	// Send initial request
 	initialResp, err := s.apiClient.SendRequest(ctx, initialRequestMap)
 	if err != nil {
@@ -115,22 +119,42 @@ func (s *ThinkService) AnalyzeThought(ctx context.Context, thought string, confi
 	}
 
 	// Process the tool request - in this case, providing an analysis of the thought
-	toolResult := `I've analyzed the thought about launching a new feature. Here are my observations:
+	// Create a dynamic response based on the thought
+	var toolResult string
+	if thought == "Japan is cool" {
+		toolResult = `I've analyzed the thought "Japan is cool":
 
 Strengths:
-- Quantitative data supports benefits (23% engagement, 15% load time)
-- Aligns with Q2 goals
-- Shows consideration of both benefits and risks
+- Simple and clear statement of opinion
+- Easy to understand sentiment 
+- Broadly relatable to many audiences
 
 Concerns:
-- Incomplete security testing is a significant risk
-- Parallel security testing during rollout might identify issues too late
-- No mention of rollback plan if security issues are found
+- Very general statement lacking specific details
+- No supporting evidence or reasoning provided
+- Could be perceived as overly simplistic
 
 Recommendation:
-- Complete at least basic security testing before any release
-- Consider a phased rollout approach with clear metrics for each phase
-- Prepare a contingency plan for security issues`
+- Consider adding specific aspects of Japan that are "cool"
+- Provide personal experiences or facts that support this opinion
+- Consider cultural context and avoid generalizations`
+	} else {
+		// Default response for other thoughts
+		toolResult = `I've analyzed the thought. Here are my observations:
+
+Strengths:
+- Clear statement of opinion
+- Easy to understand the main point
+
+Concerns:
+- Limited supporting details or evidence
+- Could benefit from more specific examples
+
+Recommendation:
+- Add specific supporting details
+- Consider different perspectives
+- Clarify reasoning behind the thought`
+	}
 
 	// Prepare follow-up request with tool result
 	followUpRequestMap := map[string]interface{}{
